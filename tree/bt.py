@@ -92,6 +92,7 @@ class BinaryTree(DataStructure):
                 index = i
                 break
         if index is not None:
+            self.count -= 1
             self.handle_deletion(index)
         return self
 
@@ -111,7 +112,6 @@ class BinaryTree(DataStructure):
         return to_return
 
     def handle_deletion(self, index):
-        print(f"index: {index}")
         if self[self.get_left_child_index(index)] is not None or self[self.get_right_child_index(index)] is not None:
             swapped_parent = self.get_right_child_index(index)
             while self.nodes[swapped_parent] is not None:
@@ -120,8 +120,7 @@ class BinaryTree(DataStructure):
             self.handle_deletion(index)
 
     def shift_up(self, index, swapped_parent):
-        self[index] = self[swapped_parent]
-        self[swapped_parent] = None
+        self[index], self[swapped_parent] = self[swapped_parent], None
         return swapped_parent, self.get_right_child_index(swapped_parent)
 
     def inorder_traversal(self, root):
