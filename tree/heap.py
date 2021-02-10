@@ -122,7 +122,10 @@ class Heap(BinaryTree):
 
     def decr_key(self, node):
         # print(node, node.dist)
-        self.heapify(self.key_map.get(node))
+        index = self.key_map.get(node)
+        if index is not None:
+            print('\033[91m' + f"The given node is already popped." + '\033[0m')
+            self.heapify(index)
         # print(self)
 
 
