@@ -5,33 +5,44 @@ class DataStructure(object):
 
     def __init__(self, n: int):
         self.nodes = [None for _ in range(n)]
-        self.count = 0
+        self.size = 0
         self.next_free = 0
         self.max_size = n
+        self.key_map = {}
 
     def __int__(self):
-        return self.count
+        return self.size
 
     def __abs__(self):
-        return self.count
+        return self.size
 
     def __len__(self):
-        return len(list(filter(lambda n: n is not None, self.nodes)))
+        return self.size
 
     def __bool__(self):
-        return self.count != 0
+        return self.size != 0
 
-    @abstractmethod
     def __eq__(self, other):
-        pass
+        if other is self:
+            return True
+        elif type(other) == type(self):
+            for (i, node) in enumerate(self.nodes):
+                if not node == other[i]:
+                    return False
+        return True
+
+    def __getitem__(self, item):
+        return self.nodes[item] if item < self.max_size else None
+
+    def __setitem__(self, key, value):
+        self.nodes[key] = value
 
     @abstractmethod
     def __reversed__(self):
         pass
 
-    @abstractmethod
     def __contains__(self, item):
-        pass
+        return self.key_map.get(item) is not None
 
     def __add__(self, other):
         pass
@@ -39,9 +50,11 @@ class DataStructure(object):
     def __sub__(self, other):
         pass
 
+    @abstractmethod
     def __iadd__(self, other):
         pass
 
+    @abstractmethod
     def __isub__(self, other):
         pass
 

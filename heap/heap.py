@@ -1,12 +1,35 @@
-from bt import *
+from ds import *
 
 
-class Heap(BinaryTree):
+class Heap(DataStructure):
 
     def __init__(self, n: int):
         super().__init__(n)
         self.next_free = n - 1
-        self.key_map = {}
+
+    def __has_next_left(self, parent):
+        return self.get_left_child_index(parent) < self.max_size
+
+    def __has_next_right(self, parent):
+        return self.get_right_child_index(parent) < self.max_size
+
+    @staticmethod
+    def get_parent_index(child_index: int):
+        return int((child_index - 1) // 2)
+
+    @staticmethod
+    def get_left_child_index(parent_index: int):
+        return parent_index * 2 + 1
+
+    @staticmethod
+    def get_right_child_index(parent_index: int):
+        return (parent_index + 1) * 2
+
+    def __reversed__(self):
+        raise NotImplemented
+
+    def __eq__(self, other):
+        return super().__eq__(other) and isinstance(other, Heap)
 
     def __add__(self, new_node):
         new_heap = Heap(self.max_size)
@@ -25,7 +48,7 @@ class Heap(BinaryTree):
         if self.next_free != -1:
             new_index = self.next_free
             if self[new_index] is None:
-                self.count += 1
+                self.size += 1
                 self[new_index] = new_node
                 self.key_map[new_node] = new_index
                 # print(self.key_map)
@@ -44,7 +67,7 @@ class Heap(BinaryTree):
         # print(f"{to_remove} at {index}")
         if index is not None:
             self.key_map.pop(to_remove)
-            self.count -= 1
+            self.size -= 1
             self.handle_deletion(index)
         return self
 
@@ -65,9 +88,6 @@ class Heap(BinaryTree):
         return to_return
 
     def handle_deletion(self, index):
-        if self.count == 0:
-            self[0] = None
-            return
 
         right_child_index = self.get_right_child_index(index)
         left_child_index = self.get_left_child_index(index)
@@ -78,20 +98,21 @@ class Heap(BinaryTree):
         if left_child is not None or right_child is not None:
 
             if left_child is not None and right_child is None:
-                swap_index = left_child_index
+                child_index = left_child_index
             elif left_child is None and right_child is not None:
-                swap_index = right_child_index
+                child_index = right_child_index
             elif right_child < left_child:
-                swap_index = right_child_index
+                child_index = right_child_index
             else:
-                swap_index = left_child_index
+                child_index = left_child_index
 
-            index = self.shift_up(index, swap_index)
+            index = self.swap(index, child_index)
             self.handle_deletion(index)
+        else:
+            self[index] = None
 
-    def shift_up(self, index, swap_index):
-        self[index] = self[swap_index]
-        self[swap_index] = None
+    def swap(self, index, swap_index):
+        self[index], self[swap_index] = self[swap_index], self[index]
 
         if self[index] is not None:
             self.key_map[self[index]] = index
@@ -104,27 +125,16 @@ class Heap(BinaryTree):
     def heapify(self, index):
         # print(f"I heapify on index: {index}")
         parent_index = self.get_parent_index(index)
-        # print(self[parent_index].__repr__(), self[index].__repr__())
+        # print(f"My parent is: {parent_index}")
         while index != 0 and (self[index] is not None) and ((self[parent_index] is None) or (self[parent_index] > self[index])):
-            self[index], self[parent_index] = self[parent_index], self[index]
-
-            if self[index] is not None:
-                self.key_map[self[index]] = index
-
-            if self[parent_index] is not None:
-                self.key_map[self[parent_index]] = parent_index
-
-            index = parent_index
+            index = self.swap(index, parent_index)
             parent_index = self.get_parent_index(index)
 
-    def valid_index(self, index):
-        return 0 <= index < self.max_size
-
     def decr_key(self, node):
-        # print(node, node.dist)
+        # print(node.__repr__(), node.dist)
+        # print(self.key_map)
         index = self.key_map.get(node)
         if index is not None:
-            print('\033[91m' + f"The given node is already popped." + '\033[0m')
             self.heapify(index)
         # print(self)
 
@@ -133,7 +143,7 @@ if __name__ == '__main__':
     heap = Heap(16)
     for i in range(8, 2, -1):
         heap += i
-    print(heap, heap.count)
+    print(heap, heap.size)
     while heap:
         print(heap.pop())
-        print(heap.nodes, heap.count)
+        print(heap.nodes, heap.size)

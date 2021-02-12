@@ -92,7 +92,7 @@ class BinaryTree(DataStructure):
                 index = i
                 break
         if index is not None:
-            self.count -= 1
+            self.size -= 1
             self.handle_deletion(index)
         return self
 
