@@ -5,7 +5,6 @@ class Heap(DataStructure):
 
     def __init__(self, n: int):
         super().__init__(n)
-        self.next_free = n - 1
 
     def __has_next_left(self, parent):
         return self.get_left_child_index(parent) < self.max_size
@@ -45,17 +44,15 @@ class Heap(DataStructure):
         return new_heap
 
     def __iadd__(self, new_node):
-        if self.next_free != -1:
+        if self.next_free is not None:
             new_index = self.next_free
-            if self[new_index] is None:
-                self.size += 1
-                self[new_index] = new_node
-                self.key_map[new_node] = new_index
-                # print(self.key_map)
-                self.next_free = self.max_size - 1
-            else:
-                self.next_free -= 1
-                self.__iadd__(new_node)
+            self[new_index] = new_node
+            self.size += 1
+            self.key_map[new_node] = new_index
+            # print(self.key_map)
+            self.next_free += 1
+            if self.size > self.max_size:
+                self.next_free = None
         else:
             return self
 
@@ -68,7 +65,11 @@ class Heap(DataStructure):
         if index is not None:
             self.key_map.pop(to_remove)
             self.size -= 1
-            self.handle_deletion(index)
+            self.sift_down(index, True)
+            if self.next_free is None:
+                self.next_free = self.max_size - 1
+            else:
+                self.next_free -= 1
         return self
 
     def __iter__(self):
@@ -87,7 +88,7 @@ class Heap(DataStructure):
         self.__isub__(to_return)
         return to_return
 
-    def handle_deletion(self, index):
+    def sift_down(self, index, delete=False):
 
         right_child_index = self.get_right_child_index(index)
         left_child_index = self.get_left_child_index(index)
@@ -107,9 +108,10 @@ class Heap(DataStructure):
                 child_index = left_child_index
 
             index = self.swap(index, child_index)
-            self.handle_deletion(index)
+            self.sift_down(index, delete)
         else:
-            self[index] = None
+            if delete:
+                self[index] = None
 
     def swap(self, index, swap_index):
         self[index], self[swap_index] = self[swap_index], self[index]
