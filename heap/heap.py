@@ -128,7 +128,8 @@ class Heap(DataStructure):
         # print(f"I heapify on index: {index}")
         parent_index = self.get_parent_index(index)
         # print(f"My parent is: {parent_index}")
-        while index != 0 and (self[index] is not None) and ((self[parent_index] is None) or (self[parent_index] > self[index])):
+        while index != 0 and (self[index] is not None) \
+                and ((self[parent_index] is None) or (self[index] < self[parent_index])):
             index = self.swap(index, parent_index)
             parent_index = self.get_parent_index(index)
 

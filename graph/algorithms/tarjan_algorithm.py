@@ -47,7 +47,7 @@ class Tarjan:
             scc_s.append(scc_list)
 
     @classmethod
-    def tarjan(cls, g: "Graph") -> list[list["Vertex"]]:
+    def find_scc(cls, g: "Graph") -> list[list["Vertex"]]:
         vertices = {key: [False, None, None, False] for key in g.vertices}
         n = len(vertices)
         stack = Stack(n)
@@ -70,4 +70,4 @@ if __name__ == '__main__':
     g.add_edge(h)
 
     print(g)
-    print(Tarjan.tarjan(g))
+    print(Tarjan.find_scc(g))

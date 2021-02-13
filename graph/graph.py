@@ -60,16 +60,9 @@ class Vertex(object):
         return str(self.label)
 
     def __lt__(self, other: "Vertex") -> bool:
+        if self.dist is None:
+            return self.label < other.label
         return self.dist < other.dist
-
-    def __gt__(self, other: "Vertex") -> bool:
-        return self.dist > other.dist
-
-    def __ge__(self, other: "Vertex") -> bool:
-        return self.dist >= other.dist
-
-    def __le__(self, other: "Vertex") -> bool:
-        return self.dist <= other.dist
 
     def __eq__(self, other: "Vertex") -> bool:
         return super().__eq__(other)
@@ -219,8 +212,10 @@ class Edge(object):
 
 
 class Graph(object):
-    def __init__(self, directed: bool = False, n: int = 0, simple: bool = False, path: bool = False, path_length: int = 0,
-                 cycle: bool = False, cycle_length: int = 0, complete: bool = False):
+    def __init__(self, directed: bool = False, n: int = 0, simple: bool = False,
+                 path: bool = False, path_length: int = 0,
+                 cycle: bool = False, cycle_length: int = 0,
+                 complete: bool = False):
         """
         Creates a graph.
         :param directed: Whether the graph should behave as a directed graph.
