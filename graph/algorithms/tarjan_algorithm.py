@@ -12,8 +12,7 @@ class Tarjan:
     num = 0
 
     @classmethod
-    def __find_strongly_connected(cls, vertex, stack, vertices) -> \
-            Union[tuple[list["Vertex"], Optional[Any]], tuple[list["Vertex"], None]]:
+    def __find_strongly_connected(cls, vertex, stack, vertices, scc_s) -> None:
         # print(vertex, vertices, stack)
         sub_solution = None
         sub_sub = None
@@ -29,7 +28,7 @@ class Tarjan:
             # print(f"{vertex} -> {neighbour}")
             neighbour_info = vertices.get(neighbour)
             if not neighbour_info[cls.visited]:
-                sub_solution, sub_sub = cls.__find_strongly_connected(neighbour, stack, vertices)
+                cls.__find_strongly_connected(neighbour, stack, vertices, scc_s)
                 vertex_info[cls.low_link] = min(neighbour_info[cls.low_link], vertex_info[cls.low_link])
                 # print(vertex_info)
             else:
@@ -47,13 +46,7 @@ class Tarjan:
                 vertices.get(scc_vertex)[cls.visited] = False
                 vertices.get(scc_vertex)[cls.found_scc] = True
                 scc_list.append(scc_vertex)
-            # print(f"returning: {scc_list} and {sub_solution}")
-            return scc_list, sub_solution
-        else:
-            if sub_solution is not None:
-                if sub_sub is not None:
-                    sub_solution.append(sub_sub)
-            return sub_solution, None
+            scc_s.append(scc_list)
 
     @classmethod
     def tarjan(cls, g: "Graph") -> list[list["Vertex"]]:
@@ -63,16 +56,7 @@ class Tarjan:
         list_of_sccs = []
         for vertex in vertices:
             if not vertices.get(vertex)[cls.visited] and not vertices.get(vertex)[cls.found_scc]:
-                scc, sub_scc = cls.__find_strongly_connected(vertex, stack, vertices)
-                # print(scc, sub_scc, "final")
-                if scc is not None:
-                    # print("appending: ", scc)
-                    list_of_sccs.append(scc)
-
-                if sub_scc is not None:
-                    # print("appending: ", sub_scc)
-                    list_of_sccs.append(sub_scc)
-
+                cls.__find_strongly_connected(vertex, stack, vertices, list_of_sccs)
         return list_of_sccs
 
 
