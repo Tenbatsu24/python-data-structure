@@ -98,7 +98,6 @@ class Vertex(object):
             self._incidence[other] = set()
 
         self._incidence[other].add(edge)
-        self._incidence[self].add(edge)
 
     @property
     def graph(self) -> "Graph":
@@ -220,13 +219,38 @@ class Edge(object):
 
 
 class Graph(object):
-    def __init__(self, directed: bool, n: int=0, simple: bool=False):
+    def __init__(self, directed: bool = False, n: int = 0, simple: bool = False, path: bool = False, path_length: int = 0,
+                 cycle: bool = False, cycle_length: int = 0, complete: bool = False):
         """
         Creates a graph.
         :param directed: Whether the graph should behave as a directed graph.
         :param simple: Whether the graph should be a simple graph, that is, not have multi-edges or loops.
         :param n: Optional, the number of vertices the graph should create immediately
         """
+
+        if not complete:
+            min_cycle = 2 if simple else 1
+
+            if cycle and not path:
+                path_length = -1
+            elif path and not cycle:
+                cycle_length = 0
+
+            if cycle:
+                if min_cycle > cycle_length or cycle_length > n:
+                    raise GraphError(f"Can not a create a cycle of length {cycle_length} with {n} vertices")
+            if path:
+                if 0 > path_length or path_length >= n:
+                    raise GraphError(f"Can not create a path of length {path_length} with {n} vertices")
+
+            if cycle and path:
+                if path_length >= n - cycle_length:
+                    raise GraphError(f"Can not create a graph with {n} vertices with both length:{path_length} path "
+                                     f"and length:{cycle_length} length cycle when simple:{simple}")
+        else:
+            if complete and (path or cycle):
+                raise GraphError(f"Can not create complete graph when wither path:{path} or cycle:{cycle} are True")
+
         self._v = list()
         self._e = list()
         self._simple = simple
@@ -235,6 +259,33 @@ class Graph(object):
 
         for i in range(n):
             self.add_vertex(Vertex(self))
+
+        if not complete:
+            if path:
+                for (i, vertex) in enumerate(self.vertices[:path_length]):
+                    edge = Edge(vertex, self.vertices[i+1])
+                    self.add_edge(edge)
+            if cycle:
+                sublist = self.vertices[path_length+1:path_length+cycle_length+1]
+                for (i, vertex) in enumerate(sublist):
+                    edge = Edge(vertex, sublist[(i+1) % cycle_length])
+                    self.add_edge(edge)
+        else:
+            self.__complete()
+
+    def __complete(self):
+        start = 1 if self.simple else 0
+        vertex_list = self.vertices if not self.simple else self.vertices[:-1]
+        # print(vertex_list)
+        for vertex in vertex_list:
+            for neighbour in self.vertices[start:]:
+                edge = Edge(vertex, neighbour)
+                if edge not in self._e:
+                    self.add_edge(edge)
+                    # print(vertex, neighbour, edge)
+            start = start + 1 if self.simple else 0
+            if start == len(self.vertices):
+                break
 
     def __repr__(self):
         """
@@ -334,6 +385,7 @@ class Graph(object):
         self._e.append(edge)
 
         edge.head.add_incidence(edge)
+        edge.tail.add_incidence(edge)
 
     def __add__(self, other: "Graph") -> "Graph":
         """
@@ -346,43 +398,13 @@ class Graph(object):
         other.__add_to(g)
         return g
 
-    def __iadd__(self, other: Union[Edge, Vertex]) -> "Graph":
-        """
-        Add either an `Edge` or `Vertex` with the += syntax.
-        :param other: The object to be added
-        :return: The modified graph
-        """
-        if isinstance(other, Vertex):
-            self.add_vertex(other)
-
-        if isinstance(other, Edge):
-            self.add_edge(other)
-
-        return self
-
-    def find_edge(self, u: "Vertex", v: "Vertex") -> Set["Edge"]:
-        """
-        Tries to find edges between two vertices.
-        :param u: One vertex
-        :param v: The other vertex
-        :return: The set of edges incident with both `u` and `v`
-        """
-        result = u._incidence.get(v, set())
-
-        if not self._directed:
-            result |= v._incidence.get(u, set())
-
-        return set(result)
-
-    def is_adjacent(self, u: "Vertex", v: "Vertex") -> bool:
-        """
-        Returns True iff vertices `u` and `v` are adjacent. If the graph is directed, the direction of the edges is
-        respected.
-        :param u: One vertex
-        :param v: The other vertex
-        :return: Whether the vertices are adjacent
-        """
-        return v in u.neighbours and (not self.directed or any(e.head == v for e in u.incidence))
+    def __sub__(self, other: "Graph") -> "Graph":
+        g = Graph(self.directed, simple=self.simple)
+        self.__add_to(g)
+        for edge in g.edges:
+            if edge in other.edges:
+                g.remove_edge(edge)
+        return g
 
     def __add_to(self, g):
         old_vertices = {}
@@ -420,6 +442,101 @@ class Graph(object):
         graph.__add_to(new_g)
         return new_g
 
+    def __iadd__(self, other: Union[Edge, Vertex]) -> "Graph":
+        """
+        Add either an `Edge` or `Vertex` with the += syntax.
+        :param other: The object to be added
+        :return: The modified graph
+        """
+        if isinstance(other, Vertex):
+            self.add_vertex(other)
+
+        if isinstance(other, Edge):
+            self.add_edge(other)
+
+        return self
+
+    def __isub__(self, other: Union[Edge, Vertex]) -> "Graph":
+        """
+        Subtract either an `Edge` or `Vertex` with the += syntax.
+        :param other: The object to be added
+        :return: The modified graph
+        """
+        if isinstance(other, Vertex):
+            self.remove_vertex(other)
+
+        if isinstance(other, Edge):
+            self.remove_edge(other)
+
+        return self
+
+    def find_edge(self, u: "Vertex", v: "Vertex") -> Set["Edge"]:
+        """
+        Tries to find edges between two vertices.
+        :param u: One vertex
+        :param v: The other vertex
+        :return: The set of edges incident with both `u` and `v`
+        """
+        result = u._incidence.get(v, set())
+
+        if not self._directed:
+            result |= v._incidence.get(u, set())
+
+        return set(result)
+
+    def is_adjacent(self, u: "Vertex", v: "Vertex") -> bool:
+        """
+        Returns True iff vertices `u` and `v` are adjacent. If the graph is directed, the direction of the edges is
+        respected.
+        :param u: One vertex
+        :param v: The other vertex
+        :return: Whether the vertices are adjacent
+        """
+        return v in u.neighbours and (not self.directed or any(e.head == v for e in u.incidence))
+
+    def get_complement(self) -> "Graph":
+        g = Graph(directed=self.directed, simple=self.simple)
+        self.__add_to(g)
+        edges_to_add = []
+        edges_to_remove = []
+        for u in g.vertices:
+            for v in g.vertices:
+                # print(f"finding for: {u}-{v}")
+                edges = g.find_edge(u, v)
+                if len(edges) > 0:
+                    for edge in edges:
+                        # print(f"removing edge -> {edge}")
+                        edges_to_remove.append(edge)
+                else:
+                    # print(f"Checking edge: {u}-{v}")
+                    if self.simple and ((u == v) or Edge(v, u) in edges_to_add):
+                        pass
+                    elif Edge(u, v) not in edges_to_add:
+                        edges_to_add.append(Edge(u, v))
+
+        for edge in edges_to_remove:
+            # print(f"removing edge -> {edge}")
+            if edge in g.edges:
+                g.remove_edge(edge)
+
+        for edge in edges_to_add:
+            # if not g.simple or (g.simple and len(g.find_edge(edge.head, edge.tail)) == 0):
+                # print(f"Adding edge: {edge}")
+            g.add_edge(edge)
+        return g
+
+    def remove_edge(self, edge: "Edge"):
+        edge.head._remove_incidence(edge)
+        edge.tail._remove_incidence(edge)
+        self._e.remove(edge)
+        pass
+
+    def remove_vertex(self, vertex: "Vertex"):
+        for edge in vertex.incidence:
+            # print(f"Removing edge: {edge}")
+            self.remove_edge(edge)
+        self._v.remove(vertex)
+
 
 class UnsafeGraph(Graph):
     @property
@@ -437,6 +554,7 @@ class UnsafeGraph(Graph):
         self._e.append(edge)
 
         edge.head.add_incidence(edge)
+        edge.tail.add_incidence(edge)
 
     def find_edge(self, u: "Vertex", v: "Vertex") -> Set["Edge"]:
         left = u._incidence.get(v, None)
