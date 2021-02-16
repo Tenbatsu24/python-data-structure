@@ -55,10 +55,6 @@ class DataStructure(object):
         pass
 
     @abstractmethod
-    def __isub__(self, other):
-        pass
-
-    @abstractmethod
     def __iter__(self):
         pass
 

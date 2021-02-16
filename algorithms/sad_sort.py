@@ -25,3 +25,12 @@ if __name__ == '__main__':
                 for l in filter(lambda n: n != i and n != j and n != k, test_0):
                     res = sad_sort([i, j, k, l], 4)
                     print(f"{[i, j, k, l]}->{res}: {res == [1, 2, 3, 4]}")
+    print()
+    print()
+
+    test_1 = [1, 2, 3]
+    for i in test_1:
+        for j in filter(lambda n: n != i, test_1):
+            for k in filter(lambda n: n != i and n != j, test_1):
+                res = sad_sort([i, j, k], 3)
+                print(f"{[i, j, k]}->{res}: {res == [1, 2, 3]}")

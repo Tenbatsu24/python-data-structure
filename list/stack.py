@@ -1,33 +1,20 @@
 from ds import DataStructure
+from list.list import List
 
 
-class Node:
-    def __init__(self, value):
-        self.value = value
-        self.next = None
-
-
-class Stack(DataStructure):
+class Stack(List):
 
     # Initializing a stack.
     # Use a dummy node, which is
     # easier for handling edge cases.
     def __init__(self, n):
         super().__init__(n)
-        self.head = 0
 
     def __eq__(self, other):
         return self.__eq__(other) and isinstance(other, Stack)
 
     def __reversed__(self):
         raise NotImplemented
-
-    def __iter__(self):
-        self.__iter = filter(lambda node: node is not None, self.nodes)
-        return self
-
-    def __next__(self):
-        return self.__iter.__next__()
 
     # String representation of the stack
     def __str__(self):
@@ -42,9 +29,6 @@ class Stack(DataStructure):
             curr_index = self.next_index(curr_index)
             curr = self[curr_index]
         return string
-
-    def next_index(self, index):
-        return (index + 1) % self.max_size
 
     # Get the top item of the stack
     def peek(self):
@@ -64,6 +48,9 @@ class Stack(DataStructure):
                 self.next_free = None
         return self
 
+    def push(self, value):
+        self.__iadd__(value)
+
     # Remove a value from the stack and return.
     def pop(self):
         if not self:
@@ -74,3 +61,17 @@ class Stack(DataStructure):
         self.next_free = self.head
         self.head = self.next_index(self.head - 2)
         return removed
+
+    @classmethod
+    def to_array(cls, stack):
+        array = [None for _ in range(stack.max_size)]
+        curr_node = stack.head
+        size = 0
+        while size != stack.max_size:
+            if array[size] is not None:
+                array[size] = stack[curr_node]
+                curr_node = List.next_index(stack, curr_node)
+                size += 1
+            else:
+                break
+        return array
