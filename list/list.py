@@ -1,9 +1,7 @@
-from abc import ABC
-
 from ds import DataStructure
 
 
-class List(DataStructure, ABC):
+class List(DataStructure):
 
     def __init__(self, n):
         super(List, self).__init__(n)
