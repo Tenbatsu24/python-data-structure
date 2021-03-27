@@ -41,7 +41,7 @@ class DisjointSet:
 
 
 if __name__ == '__main__':
-    my_set = DisjointSet(10, False)
+    my_set = DisjointSet(10, True)
     my_set.union(1, 7)
     my_set.union(3, 4)
     my_set.union(2, 5)
