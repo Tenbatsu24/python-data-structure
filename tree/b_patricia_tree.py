@@ -6,10 +6,25 @@ PRUNE = 1 << LENGTH
 MSB = (1 << (LENGTH - 1)) - 1
 
 
+def get_sign_bit(residue):
+    return int((MSB - residue) < 0)
+
+
+def shift_left(residue, by=1):
+    left = residue
+    for _ in range(by):
+        left = ((left << 1) | PRUNE) ^ PRUNE
+    return left
+
+
+def match(word, target):
+    return word | target == word
+
+
 class BinaryNode:
 
-    def __init__(self, sign, key=ROGUE, word_length=1):
-        self.word = sign
+    def __init__(self, word, key=ROGUE, word_length=1):
+        self.word = word
         self.key = key
         self.word_length = word_length
         self.left = None
@@ -42,21 +57,6 @@ class BinaryNode:
             return self.left
 
 
-def get_sign_bit(residue):
-    return int((MSB - residue) < 0)
-
-
-def shift_left(residue, by=1):
-    left = residue
-    for _ in range(by):
-        left = ((left << 1) | PRUNE) ^ PRUNE
-    return left
-
-
-def match(word, target, target_length, match_offset):
-    return word | (target << (LENGTH - match_offset - target_length)) == word
-
-
 class BinaryPatriciaTree:
     def __init__(self, default=DEFAULT):
         self.root = BinaryNode(0, default, 0)
@@ -66,7 +66,7 @@ class BinaryPatriciaTree:
         curr_node = self.root
         while length:
             sign = get_sign_bit(residue)
-            curr_node[sign] = BinaryNode(sign)
+            curr_node[sign] = BinaryNode(word & (1 << (length-1)))
             curr_node = curr_node[sign]
             residue = shift_left(residue)
             length -= 1
@@ -83,7 +83,7 @@ class BinaryPatriciaTree:
         if branch is not None:
             self.__contract(branch)
             if not other_branch and node.key == ROGUE:
-                node.word = (node.word << branch.word_length) + branch.word
+                node.word |= branch.word
                 node.word_length += branch.word_length
                 node.key = branch.key
                 node.left, node.right = branch.left, branch.right
@@ -96,7 +96,7 @@ class BinaryPatriciaTree:
         residue = word
 
         while curr_node:
-            if match(word, curr_node.word, curr_node.word_length, match_offset):
+            if match(word, curr_node.word):
                 matched_to = curr_node.key if curr_node.key != ROGUE else matched_to
                 match_offset += curr_node.word_length
 
@@ -127,3 +127,4 @@ if __name__ == '__main__':
     print(pt.match(d))
     print(pt.match(b))
     print(pt.match(0b11011))
+    print(pt.match(0b00111))
